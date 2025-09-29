@@ -11,6 +11,7 @@ export default function Page() {
   const [selfieBlob, setSelfieBlob] = useState<Blob | null>(null);
   const [cameraOpen, setCameraOpen] = useState(false);
 
+  const [identifier, setIdentifier] = useState(""); // ⬅️ simpan ID number user
   // Dark-green palette
   const bg = "#0e2a24";
   const surface = "#11342c";
@@ -32,15 +33,41 @@ export default function Page() {
     }
   }, [idType]);
 
-  const onSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    alert(
-      `Submitted: idType=${idType}, idFile=${idFile?.name ?? "none"}, selfie=${
-        selfieBlob ? "captured" : "none"
-      }`
-    );
-  };
 
+
+  const onSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!idFile) {
+      alert("Please upload ID file first");
+      return;
+    }
+
+    if (!identifier) {
+      alert("Please enter your ID number");
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onloadend = async () => {
+      const base64 = (reader.result as string).split(",")[1];
+
+      const response = await fetch("/api/ocr", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          keyword: identifier, // ⬅️ sekarang pakai ID number
+          imageBase64: base64,
+        }),
+      });
+
+      const result = await response.json();
+      console.log("OCR Result:", result);
+      alert(JSON.stringify(result, null, 2));
+    };
+
+    reader.readAsDataURL(idFile);
+  };
   return (
     <main
       className="min-h-screen text-white flex items-center justify-center p-4"
@@ -88,6 +115,7 @@ export default function Page() {
               <input
                 required
                 name="identifier"
+                onChange={(e) => setIdentifier(e.target.value)}
                 placeholder="e.g., A123456789"
                 className="w-full rounded-lg px-3 py-2 bg-transparent border outline-none focus:ring-2"
                 style={{
