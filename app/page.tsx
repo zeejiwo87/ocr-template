@@ -20,8 +20,6 @@ export default function Page() {
   const dashed = "#2e6a59";
   const textSecondary = "#a0c3b7";
 
-
-  // Label pendek khusus tombol supaya tidak melebar (License)
   const shortIdLabel = useMemo(() => {
     switch (idType) {
       case "idcard":
